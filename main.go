@@ -7,7 +7,38 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/charmbracelet/lipgloss"
 )
+
+var headerStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("#34567c")).
+	Background(lipgloss.Color("#2e2a31")).
+	AlignHorizontal(lipgloss.Center).
+	Width(50)
+
+var weatherLocationStyle = lipgloss.NewStyle().
+	Bold(false).
+	Foreground(lipgloss.Color("#080715")).
+	Background(lipgloss.Color("#34567c")).
+	AlignHorizontal(lipgloss.Center).
+	AlignVertical(lipgloss.Center).
+	Width(50)
+
+var rainyStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("#8b1a1e")).
+	AlignHorizontal(lipgloss.Left).
+	Width(60)
+
+var notRainyStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#d5e9ea")).
+	Bold(true)
+
+var infoStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#34567c")).
+	Italic(true)
 
 type Weather struct {
 	Location struct {
@@ -64,15 +95,19 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println(headerStyle.Render("Zrgst@sun.app"))
+
 	location, current, hours := weather.Location, weather.Current, weather.Forecast.Forecastday[0].Hour
-	fmt.Printf(
-		"%s, %s: %.0fC, %s\n",
+	locationMessage := fmt.Sprintf(
+		"%s, %s: %.0fC, %s",
 		location.Name,
 		location.Country,
 		current.TempC,
 		current.Condition.Text,
 	)
 
+	fmt.Print(weatherLocationStyle.Render(locationMessage))
+	fmt.Println()
 	for _, hour := range hours {
 		date := time.Unix(hour.TimeEpoch, 0)
 
@@ -81,7 +116,7 @@ func main() {
 		}
 
 		message := fmt.Sprintf(
-			"%s - %.0fC, %.0f%%, %s\n",
+			"%s - %.0fC, %.0f%%, %s",
 			date.Format("15:04"),
 			hour.TempC,
 			hour.ChanceOfRain,
@@ -89,10 +124,13 @@ func main() {
 		)
 
 		if hour.ChanceOfRain < 40 {
-			fmt.Print(message)
+			fmt.Print(notRainyStyle.Render(message))
+			fmt.Println()
 		} else {
-			fmt.Print("\033[31m" + message + "\033[0m") // Print in red if chance of rain is 40% or more
+			fmt.Print(rainyStyle.Render(message)) // Print in red if chance of rain is 40% or more
+			fmt.Println()
 		}
 
 	}
+	fmt.Println(infoStyle.Render("- For custom location add location\n after command:\n$ sun <location>"))
 }
